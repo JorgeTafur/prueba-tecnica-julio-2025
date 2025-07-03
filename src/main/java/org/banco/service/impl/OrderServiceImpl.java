@@ -20,9 +20,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void updateProductQuantityInOrder(Long orderId, Long productId, int newQuantity) {
-        if (newQuantity < 0) {
-            throw new InvalidQuantityException();
-        }
+        validateQuantity(newQuantity);
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -30,10 +28,24 @@ public class OrderServiceImpl implements OrderService {
         OrderProduct orderProduct = orderProductRepository.findByOrderIdAndProductId(orderId, productId)
                 .orElseThrow(ProductNotFoundExceptionInOrder::new);
 
-        if (newQuantity > orderProduct.getProduct().getAvailableQuantity()) {
+        validateAvailability(newQuantity, orderProduct);
+
+        updateQuantity(orderProduct, newQuantity);
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity < 0)  {
+            throw new InvalidQuantityException();
+        }
+    }
+
+    private void validateAvailability(int quantity, OrderProduct orderProduct)  {
+        if (quantity > orderProduct.getProduct().getAvailableQuantity()) {
             throw new ExceededQuantityException();
         }
+    }
 
+    private void updateQuantity(OrderProduct orderProduct, int newQuantity)  {
         try {
             orderProduct.setQuantity(newQuantity);
             orderProductRepository.save(orderProduct);
