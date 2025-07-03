@@ -49,8 +49,8 @@ public class OrderServiceImpl implements OrderService {
         try {
             orderProduct.setQuantity(newQuantity);
             orderProductRepository.save(orderProduct);
-        } catch (Exception e) {
-            throw new UpdateFailedException(e);
+        } catch (Exception ex) {
+            throw new UpdateFailedException(ex);
         }
     }
 }
