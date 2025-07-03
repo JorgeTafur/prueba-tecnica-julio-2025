@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Order Management API
+  version: 1.0.0
+  description: API para gestionar pedidos y actualizar la cantidad de productos.
+
+paths:
+  /orders/{orderId}/products/{productId}/quantity:
+    put:
+      summary: Actualizar la cantidad de un producto en un pedido
+      operationId: updateProductQuantityInOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuantityRequest'
+      responses:
+        '204':
+          description: Cantidad actualizada exitosamente
+        '400':
+          description: Cantidad inválida o error de negocio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pedido o producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Cantidad excede disponibilidad del producto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error inesperado en la base de datos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UpdateQuantityRequest:
+      type: object
+      required:
+        - newQuantity
+      properties:
+        newQuantity:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 3
+      description: Nueva cantidad deseada del producto en el pedido
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Código de error específico
+          enum:
+            - ORDER_NOT_FOUND
+            - PRODUCT_NOT_FOUND_IN_ORDER
+            - INVALID_QUANTITY
+            - EXCEEDED_QUANTITY
+            - UPDATE_FAILED
+        message:
+          type: string
+          description: Descripción detallada del error
+      example:
+        code: PRODUCT_NOT_FOUND_IN_ORDER
+        message: El producto con ID 5 no existe en el pedido con ID 10.
