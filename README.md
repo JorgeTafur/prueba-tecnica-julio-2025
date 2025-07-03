@@ -47,7 +47,15 @@ mvn clean install
 
 /* Ejecutar PruebaTecnicaJulio2025Application */
 ```
-5. Ejemplo de ruta de consulta
+
+5. Marcar código generado como Generated Sources Root
+
+```Project
+/target/generated-sources/openapi/src/main/java
+/* Click derecho. Mark Directory As. Generated Sources Root */
+```
+
+6. Ejemplo de ruta de consulta
 
 ```http
 PUT http://localhost:8080/orders/1/products/1/quantity
