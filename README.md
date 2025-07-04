@@ -9,7 +9,13 @@ API REST para la actualización de cantidad en el producto de un pedido, validan
 - **MySQL**
 - **JPA/Hibernate**
 - **Lombok**
+- **JUnit 5 + Mockito**
+- **Jacoco**
 - **Postman (colección adjunta para pruebas)**
+
+## Patrones de Diseño Utilizados
+
+- **Builder**
 
 ## 🧰 Requisitos Previos
 
