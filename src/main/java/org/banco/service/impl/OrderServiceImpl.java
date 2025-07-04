@@ -3,9 +3,11 @@ package org.banco.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.banco.entity.Order;
 import org.banco.entity.OrderProduct;
+import org.banco.entity.Product;
 import org.banco.exception.*;
 import org.banco.repository.OrderProductRepository;
 import org.banco.repository.OrderRepository;
+import org.banco.repository.ProductRepository;
 import org.banco.service.OrderService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderProductRepository orderProductRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public void updateProductQuantityInOrder(Long orderId, Long productId, int newQuantity) {
@@ -28,9 +31,11 @@ public class OrderServiceImpl implements OrderService {
         OrderProduct orderProduct = orderProductRepository.findByOrderIdAndProductId(orderId, productId)
                 .orElseThrow(ProductNotFoundExceptionInOrder::new);
 
-        validateAvailability(newQuantity, orderProduct);
+        int oldQuantity = orderProduct.getQuantity();
 
-        updateQuantity(orderProduct, newQuantity);
+        validateAvailability(newQuantity, orderProduct, oldQuantity);
+
+        updateQuantityAndStock(orderProduct, newQuantity, oldQuantity);
     }
 
     private void validateQuantity(int quantity) {
@@ -39,14 +44,22 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void validateAvailability(int quantity, OrderProduct orderProduct)  {
-        if (quantity > orderProduct.getProduct().getAvailableQuantity()) {
+    private void validateAvailability(int newQuantity, OrderProduct orderProduct, int oldQuantity) {
+        int difference = newQuantity - oldQuantity;
+        int availableStock = orderProduct.getProduct().getAvailableQuantity();
+        if (difference > availableStock) {
             throw new ExceededQuantityException();
         }
     }
 
-    private void updateQuantity(OrderProduct orderProduct, int newQuantity)  {
+    private void updateQuantityAndStock(OrderProduct orderProduct, int newQuantity, int oldQuantity) {
         try {
+            int difference = newQuantity - oldQuantity;
+            Product product = orderProduct.getProduct();
+            product.setAvailableQuantity(product.getAvailableQuantity() - difference);
+
+            productRepository.save(product);
+
             orderProduct.setQuantity(newQuantity);
             orderProductRepository.save(orderProduct);
         } catch (Exception ex) {

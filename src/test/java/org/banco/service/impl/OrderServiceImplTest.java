@@ -6,6 +6,7 @@ import org.banco.entity.Product;
 import org.banco.exception.*;
 import org.banco.repository.OrderProductRepository;
 import org.banco.repository.OrderRepository;
+import org.banco.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class OrderServiceImplTest {
     @Mock
     private OrderProductRepository orderProductRepository;
 
+    @Mock
+    private ProductRepository productRepository;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
@@ -34,23 +38,30 @@ class OrderServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
         order = new Order();
+
         Product product = new Product();
         product.setAvailableQuantity(10);
 
         orderProduct = new OrderProduct();
         orderProduct.setProduct(product);
+        orderProduct.setQuantity(2);
     }
 
     @Test
     void shouldUpdateQuantitySuccessfully() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderProductRepository.findByOrderIdAndProductId(1L, 2L)).thenReturn(Optional.of(orderProduct));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderProductRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         orderService.updateProductQuantityInOrder(1L, 2L, 5);
 
+        verify(productRepository).save(orderProduct.getProduct());
         verify(orderProductRepository).save(orderProduct);
         assertEquals(5, orderProduct.getQuantity());
+        assertEquals(7, orderProduct.getProduct().getAvailableQuantity());
     }
 
     @Test
@@ -82,6 +93,7 @@ class OrderServiceImplTest {
     @Test
     void shouldThrowExceededQuantityException_whenQuantityExceedsAvailable() {
         orderProduct.getProduct().setAvailableQuantity(3);
+        orderProduct.setQuantity(1);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderProductRepository.findByOrderIdAndProductId(1L, 2L)).thenReturn(Optional.of(orderProduct));
 
